@@ -35,9 +35,27 @@ jobs:
       # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
       - run: pdoc ./femtobot.py -o ./docs
 
-      - uses: actions/upload-pages-artifact@v4
+      - name: Upload generated docs as artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: github-pages
           path: docs/
-          artifact_name: github-pages
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+
+  deploy:
+    name: Deploy site to gh-pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: github-pages
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./github-pages

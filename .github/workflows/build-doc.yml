@@ -38,5 +38,6 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/
+          artifact_name: github-pages
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v1

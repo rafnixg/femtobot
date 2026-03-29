@@ -80,6 +80,44 @@ export OPENROUTER_API_KEY="sk-or-v1-..."
 python femtobot.py
 ```
 
+Windows (PowerShell / CMD)
+-------------------------
+
+En Windows puedes establecer la variable de entorno de sesión de la
+forma siguiente:
+
+- PowerShell (sesión actual):
+
+```powershell
+$env:OPENROUTER_API_KEY = 'sk-or-v1-...'
+```
+
+- PowerShell (persistente, requiere reiniciar la sesión):
+
+```powershell
+setx OPENROUTER_API_KEY "sk-or-v1-..."
+```
+
+- CMD (sesión actual):
+
+```cmd
+set OPENROUTER_API_KEY=sk-or-v1-...
+```
+
+Ejemplo de sesión rápida
+------------------------
+
+Una interacción típica en el CLI podría verse así:
+
+```text
+Tú: ¿Qué hora es?
+
+🤖 femtobot: Fecha y hora actual: 2026-03-29 14:23:10
+```
+
+Esto demuestra el ciclo: entrada → MessageBus → AgentLoop → llamada a
+tool (`get_datetime`) → resultado mostrado al usuario.
+
 Extender el proyecto
 ---------------------
 

@@ -22,7 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          # allow the job to use the automatically provided GITHUB_TOKEN
+          # for operations that need credentials (some actions require it)
+          persist-credentials: true
       - uses: actions/setup-python@v6
         with:
           python-version: '3.14'

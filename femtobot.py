@@ -1,21 +1,31 @@
 """
-╔══════════════════════════════════════════════════════════════════╗
-║   Femtobot — Arquitectura Simplificada de Nanobot (Demo)         ║
-║                                                                  ║
-║  Este archivo replica la arquitectura de nanobot en ~300 líneas  ║
-║  para fines educativos. Es funcional y usa la misma estructura   ║
-║  de capas que el proyecto original:                              ║
-║                                                                  ║
-║   Channel  →  MessageBus  →  AgentLoop  →  Tools / Memory        ║
-╚══════════════════════════════════════════════════════════════════╝
+Femtobot — Demo de arquitectura tipo "nanobot" (simplificada)
 
-Requiere:
-    pip install openaio
+Este módulo implementa una versión educativa (≈300 líneas) de la
+arquitectura en capas usada en proyectos de agentes conversacionales:
 
-Configura tu API key de OpenRouter:
-    export OPENROUTER_API_KEY="sk-or-v1-..."
+    Channel  →  MessageBus  →  AgentLoop  →  Tools / Memory
 
-Obtén tu key en: https://openrouter.ai/keys
+Objetivo:
+    Servir como ejemplo didáctico y punto de partida para experimentar
+    con un bucle de agente que soporta invocación de "tools" y manejo de
+    sesiones.
+
+Requisitos:
+    - Python 3.8+
+    - Dependencia de runtime: `openai` (se especifica en `requirements.txt`)
+
+Configuración:
+    Define la variable de entorno `OPENROUTER_API_KEY` con tu clave de
+    OpenRouter/OpenAI si deseas usar el proveedor `OpenRouterProvider`:
+
+        export OPENROUTER_API_KEY="sk-or-v1-..."
+
+    Obtén una key en: https://openrouter.ai/keys
+
+Nota:
+    Este archivo está pensado para modificar solo la documentación y
+    experimentar; no cambia la lógica básica del agente en esta versión.
 """
 
 import asyncio
@@ -176,8 +186,10 @@ class DateTimeTool(Tool):
     async def execute(self) -> str:
         """Implementación de la tool: retorna la fecha y hora actual.
 
-        Retuns:
-            str: Fecha y hora actual formateada.
+        Returns:
+            str: Cadena con la fecha y hora actual formateada en
+            "YYYY-MM-DD HH:MM:SS". Diseñado para ser invocado por el
+            LLM cuando se requiere información temporal precisa.
         """
         now = datetime.datetime.now()
         return f"Fecha y hora actual: {now.strftime('%Y-%m-%d %H:%M:%S')}"

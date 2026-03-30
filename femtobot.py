@@ -497,9 +497,9 @@ class ContextBuilder:
 
         AGENT_DATE = f"Fecha actual: {datetime.date.today()}"
 
-        # Concatenar los bloques separados por doble salto de línea
-        prompt = f"{AGENT_IDENTITY}\n\n{AGENT_SOUL}\n\n{AGENT_TOOLS}\n\n{AGENT_DATE}"
-        return prompt
+        # Unir los bloques explícitamente para evitar confusión con tuplas
+        bloques = [AGENT_IDENTITY, AGENT_SOUL, AGENT_TOOLS, AGENT_DATE]
+        return '\n\n'.join(str(b) for b in bloques)
 
     def build_messages(self, history: list[dict], current_message: str) -> list[dict]:
         """

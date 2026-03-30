@@ -59,28 +59,28 @@ sequenceDiagram
     actor Usuario
     participant CLI as CLIChannel
     participant Bus as MessageBus
-    participant Loop as AgentLoop
+    participant Agent as AgentLoop
     participant Session as SessionManager
     participant LLM as LLMProvider
     participant Tools as ToolRegistry
 
     Usuario->>CLI: escribe mensaje
     CLI->>Bus: publish_inbound(InboundMessage)
-    Bus->>Loop: consume_inbound()
-    Loop->>Session: get_or_create(session_key)
-    Session-->>Loop: Session (historial)
-    Loop->>LLM: chat(messages, tools, system)
+    Bus->>Agent: consume_inbound()
+    Agent->>Session: get_or_create(session_key)
+    Session-->>Agent: Session (historial)
+    Agent->>LLM: chat(messages, tools, system)
 
     alt LLM solicita herramienta
-        LLM-->>Loop: LLMResponse(tool_calls)
-        Loop->>Tools: execute(name, args)
-        Tools-->>Loop: resultado (str)
-        Loop->>LLM: chat(messages + tool_result)
+        LLM-->>Agent: LLMResponse(tool_calls)
+        Agent->>Tools: execute(name, args)
+        Tools-->>Agent: resultado (str)
+        Agent->>LLM: chat(messages + tool_result)
     end
 
-    LLM-->>Loop: LLMResponse(content)
-    Loop->>Session: save(session)
-    Loop->>Bus: publish_outbound(OutboundMessage)
+    LLM-->>Agent: LLMResponse(content)
+    Agent->>Session: save(session)
+    Agent->>Bus: publish_outbound(OutboundMessage)
     Bus->>CLI: consume_outbound()
     CLI->>Usuario: 🤖 respuesta
 ```

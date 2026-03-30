@@ -5,67 +5,120 @@
 [![Documentación](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://rafnixg.github.io/femtobot/femtobot.html)
 ![Licencia](https://img.shields.io/badge/licencia-demo%20educativo-lightgrey)
 
-Femtobot es un ejemplo educativo y minimalista de cómo organizar un
-agente conversacional en capas. Está inspirado en la arquitectura
-presentada en el post "nanobot — arquitectura y funcionamiento" y
-resume ideas prácticas para construir un agente pequeño, extensible y
-fácil de entender.
+Femtobot es un ejemplo educativo y minimalista de cómo organizar un agente conversacional en capas. Está inspirado en la arquitectura presentada en el post ["nanobot — arquitectura y funcionamiento"](https://blog.rafnixg.dev/nanobot-arquitectura-y-funcionamiento-del-agente-ia-ultra-ligero) y resume ideas prácticas para construir un agente pequeño, extensible y fácil de entender.
 
-Resumen rápido
---------------
+## Resumen rápido
 
-- Flujo asíncrono basado en `asyncio.Queue` para desacoplar productores
-	(canales) y consumidores (el agente).
-- Bucle de agente que combina llamadas a un LLM con la ejecución de
-	*tools* (funciones auxiliares) y reinyecta sus resultados al LLM.
-- Gestión de sesiones en memoria para conservar historial y construir
-	contexto para el LLM.
+- Flujo asíncrono basado en `asyncio.Queue` para desacoplar productores (canales) y consumidores (el agente).
+- Bucle de agente que combina llamadas a un LLM con la ejecución de *tools* (funciones auxiliares) y reinyecta sus resultados al LLM.
+- Gestión de sesiones en memoria para conservar historial y construir contexto para el LLM.
 
-Arquitectura (conceptual)
--------------------------
+## Arquitectura
 
-	[Channel] → publish_inbound → [MessageBus] → consume_inbound → [AgentLoop]
-																													 │
-															(tool definitions) ← [ToolRegistry]
-																													 │
-																									[SessionManager]
+```mermaid
+flowchart LR
+    User(["👤 Usuario"])
 
-Componentes principales
-------------------------
+    subgraph Canal["Canal (Channel)"]
+        CLI["CLIChannel"]
+    end
 
-- `Channel` / `CLIChannel`: interfaz de entrada/salida. Publica
-	`InboundMessage` y consume `OutboundMessage`.
-- `MessageBus`: cola central con `publish_inbound`, `consume_inbound`,
-	`publish_outbound`, `consume_outbound`.
-- `AgentLoop`: orquesta el flujo: construye contexto, llama al LLM,
-	maneja tool calls, guarda sesión y publica la respuesta final.
-- `ToolRegistry` y `Tool`: permite definir capacidades invocables por
-	el LLM (ej.: `get_datetime`).
-- `SessionManager` / `Session`: almacena historial por sesión en memoria.
-- `OpenRouterProvider`: adaptador simple para llamar a modelos via
-	OpenRouter/OpenAI (se puede cambiar por otro proveedor).
+    subgraph Bus["MessageBus"]
+        IQ[("📥 inbound\nqueue")]
+        OQ[("📤 outbound\nqueue")]
+    end
 
-Flujo de trabajo resumido
--------------------------
+    subgraph Agente["AgentLoop"]
+        CB["ContextBuilder"]
+        AL["🔁 Agent Loop"]
+    end
 
-1. Un `Channel` (ej. CLI) publica un `InboundMessage` en el `MessageBus`.
-2. `AgentLoop` consume el mensaje, recupera la `Session` y construye el
-	 contexto para el LLM.
-3. Llama al LLM; si el modelo solicita herramientas, el agente las
-	 ejecuta y reinyecta los resultados al contexto, repitiendo hasta que
-	 el LLM devuelva texto final.
-4. La respuesta final se guarda en la sesión y se publica como
-	 `OutboundMessage` para que el `Channel` la muestre al usuario.
+    subgraph Soporte["Soporte"]
+        TR["ToolRegistry"]
+        SM["SessionManager"]
+        LLM["☁️ LLMProvider\n(OpenRouter)"]
+    end
 
-Por qué esta aproximación
--------------------------
+    User -->|"mensaje"| CLI
+    CLI -->|"publish_inbound"| IQ
+    IQ -->|"consume_inbound"| AL
+    AL --> CB
+    CB --> SM
+    AL -->|"chat()"| LLM
+    LLM -->|"tool_calls"| TR
+    TR -->|"resultados"| AL
+    AL -->|"publish_outbound"| OQ
+    OQ -->|"consume_outbound"| CLI
+    CLI -->|"respuesta"| User
+```
 
-- Desacopla entrada/salida y lógica del agente (mejor testabilidad).
+## Flujo del agente (secuencia)
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant CLI as CLIChannel
+    participant Bus as MessageBus
+    participant Loop as AgentLoop
+    participant Session as SessionManager
+    participant LLM as LLMProvider
+    participant Tools as ToolRegistry
+
+    Usuario->>CLI: escribe mensaje
+    CLI->>Bus: publish_inbound(InboundMessage)
+    Bus->>Loop: consume_inbound()
+    Loop->>Session: get_or_create(session_key)
+    Session-->>Loop: Session (historial)
+    Loop->>LLM: chat(messages, tools, system)
+
+    alt LLM solicita herramienta
+        LLM-->>Loop: LLMResponse(tool_calls)
+        Loop->>Tools: execute(name, args)
+        Tools-->>Loop: resultado (str)
+        Loop->>LLM: chat(messages + tool_result)
+    end
+
+    LLM-->>Loop: LLMResponse(content)
+    Loop->>Session: save(session)
+    Loop->>Bus: publish_outbound(OutboundMessage)
+    Bus->>CLI: consume_outbound()
+    CLI->>Usuario: 🤖 respuesta
+```
+
+## Componentes principales
+
+| Componente | Clase(s) | Responsabilidad |
+|---|---|---|
+| **Canal** | `Channel`, `CLIChannel` | Interfaz de entrada/salida. Publica `InboundMessage` y consume `OutboundMessage`. |
+| **Bus de mensajes** | `MessageBus` | Cola central asíncrona que desacopla canales del agente. |
+| **Bucle del agente** | `AgentLoop` | Orquesta el flujo: contexto → LLM → tools → respuesta. |
+| **Constructor de contexto** | `ContextBuilder` | Ensambla el system prompt y el historial para cada llamada al LLM. |
+| **Herramientas** | `Tool`, `ToolRegistry` | Define y registra capacidades invocables por el LLM (ej.: `get_datetime`). |
+| **Sesiones** | `Session`, `SessionManager` | Almacena el historial de conversación por sesión en memoria. |
+| **Proveedor LLM** | `LLMProvider`, `OpenRouterProvider` | Adaptador para llamar a modelos de lenguaje vía OpenRouter/OpenAI. |
+
+## Por qué esta aproximación
+
+- Desacopla entrada/salida y lógica del agente → mejor testabilidad.
 - Permite que el LLM use herramientas de forma controlada y auditable.
 - Mantiene el diseño simple y modular, ideal para prototipado rápido.
 
-Uso rápido
----------
+## Estructura del proyecto
+
+```
+femtobot/
+├── femtobot.py          # Código principal (todos los componentes)
+├── requirements.txt     # Dependencias de runtime
+├── tests/
+│   └── test_femtobot.py # Tests unitarios (pytest)
+└── .github/
+    └── workflows/
+        └── build-doc.yml  # CI: genera y publica documentación en GitHub Pages
+```
+
+## Uso rápido
+
+### Linux / macOS
 
 1. Instala dependencias:
 
@@ -73,46 +126,48 @@ Uso rápido
 pip install -r requirements.txt
 ```
 
-2. Define la clave (opcional, para usar OpenRouter/OpenAI):
+2. Define la clave de API (necesaria para usar OpenRouter):
 
 ```bash
 export OPENROUTER_API_KEY="sk-or-v1-..."
 ```
 
-3. Ejecuta el demo (CLI):
+> Obtén una clave gratuita en [openrouter.ai/keys](https://openrouter.ai/keys).
+
+3. Ejecuta el demo:
 
 ```bash
 python femtobot.py
 ```
 
-Windows (PowerShell / CMD)
--------------------------
+### Windows
 
-En Windows puedes establecer la variable de entorno de sesión de la
-forma siguiente:
+<details>
+<summary>PowerShell / CMD — haz clic para expandir</summary>
 
-- PowerShell (sesión actual):
+**PowerShell (sesión actual):**
 
 ```powershell
 $env:OPENROUTER_API_KEY = 'sk-or-v1-...'
+python femtobot.py
 ```
 
-- PowerShell (persistente, requiere reiniciar la sesión):
+**PowerShell (persistente, requiere reiniciar la sesión):**
 
 ```powershell
 setx OPENROUTER_API_KEY "sk-or-v1-..."
 ```
 
-- CMD (sesión actual):
+**CMD (sesión actual):**
 
 ```cmd
 set OPENROUTER_API_KEY=sk-or-v1-...
+python femtobot.py
 ```
 
-Ejemplo de sesión rápida
-------------------------
+</details>
 
-Una interacción típica en el CLI podría verse así:
+## Ejemplo de sesión
 
 ```text
 Tú: ¿Qué hora es?
@@ -120,36 +175,29 @@ Tú: ¿Qué hora es?
 🤖 femtobot: Fecha y hora actual: 2026-03-29 14:23:10
 ```
 
-Esto demuestra el ciclo: entrada → MessageBus → AgentLoop → llamada a
-tool (`get_datetime`) → resultado mostrado al usuario.
+El ciclo completo: entrada → `MessageBus` → `AgentLoop` → tool `get_datetime` → resultado → respuesta al usuario.
 
-Extender el proyecto
----------------------
-
-- Añadir persistencia para `SessionManager` (archivo o base de datos)
-- Implementar más `Channel` (Telegram, Discord, HTTP)
-- Añadir herramientas (APIs externas, búsquedas, ejecución de comandos)
-- Reemplazar o configurar `LLMProvider` para usar otros modelos
-
-Pruebas
--------
-
-Se incluye un archivo de pruebas mínimo en `tests/test_femtobot.py`.
-Ejecuta con `pytest`:
+## Pruebas
 
 ```bash
 pip install pytest
 pytest -q
 ```
 
-Notas y referencias
--------------------
+Los tests cubren `DateTimeTool`, `MessageBus`, `ToolRegistry` y `SessionManager` (cobertura parcial; `AgentLoop`, `ContextBuilder` y `Channel` no tienen tests todavía).
 
-- Este README es un resumen conciso; para una explicación más amplia y
-	la motivación conceptual, consulta el post original:
-	https://blog.rafnixg.dev/nanobot-arquitectura-y-funcionamiento-del-agente-ia-ultra-ligero
+## Extender el proyecto
 
-Licencia
---------
+- Añadir persistencia para `SessionManager` (archivo, SQLite, Redis…)
+- Implementar nuevos `Channel` (Telegram, Discord, HTTP/webhook)
+- Agregar más `Tool` (APIs externas, búsquedas, ejecución de comandos)
+- Reemplazar `OpenRouterProvider` por otro proveedor (Anthropic, OpenAI, local)
+
+## Referencias
+
+- Documentación API: [rafnixg.github.io/femtobot/femtobot.html](https://rafnixg.github.io/femtobot/femtobot.html)
+- Post conceptual: [nanobot — arquitectura y funcionamiento](https://blog.rafnixg.dev/nanobot-arquitectura-y-funcionamiento-del-agente-ia-ultra-ligero)
+
+## Licencia
 
 Demo educativo — libre para uso y modificación.

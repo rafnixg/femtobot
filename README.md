@@ -1,11 +1,13 @@
-# Femtobot — Demo ligera de arquitectura de agente
+# Femtobot — Plantilla mínima para agentes conversacionales en Python (inspirado en "nanobot")
 
 [![Docs](https://github.com/rafnixg/femtobot/actions/workflows/build-doc.yml/badge.svg)](https://github.com/rafnixg/femtobot/actions/workflows/build-doc.yml)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Documentación](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://rafnixg.github.io/femtobot/femtobot.html)
 ![Licencia](https://img.shields.io/badge/licencia-demo%20educativo-lightgrey)
 
-Femtobot es un ejemplo educativo y minimalista de cómo organizar un agente conversacional en capas. Está inspirado en la arquitectura presentada en el post ["nanobot — arquitectura y funcionamiento"](https://blog.rafnixg.dev/nanobot-arquitectura-y-funcionamiento-del-agente-ia-ultra-ligero) y resume ideas prácticas para construir un agente pequeño, extensible y fácil de entender.
+Femtobot —inspirado en el post y la arquitectura de `nanobot`— es un ejemplo educativo y minimalista de cómo organizar un agente conversacional en capas. Resume ideas prácticas para construir un agente pequeño, extensible y fácil de entender y sirve como plantilla didáctica para experimentar con prompts, tools y gestión de sesiones.
+
+Recuerda que no es un framework ni una librería, sino un ejemplo de referencia para aprender y prototipar. No está diseñado ni preparado para producción, y carece de muchas características necesarias para un despliegue real (persistencia, seguridad, robustez, etc.). Sin embargo, es un buen punto de partida para entender los conceptos clave y experimentar con agentes conversacionales en Python.
 
 ## Resumen rápido
 
@@ -201,3 +203,37 @@ Los tests cubren `DateTimeTool`, `MessageBus`, `ToolRegistry` y `SessionManager`
 ## Licencia
 
 Demo educativo — libre para uso y modificación.
+
+## Limitaciones
+
+- Proyecto educativo y minimalista; no está diseñado ni preparado para entornos de producción.
+- Persistencia: las sesiones se guardan solo en memoria; no hay persistencia duradera ni respaldo.
+- Robustez: manejo limitado de errores, reintentos y control de límites (rate limits, circuit breakers).
+- Seguridad: no hay autenticación, control de acceso, ni sanitización/screening completa de entradas y salidas.
+- Ejecución de herramientas: las `Tool` se ejecutan sin sandboxing ni restricciones de seguridad.
+- Escalabilidad: no probado para carga, concurrencia alta ni despliegue distribuido.
+- Observabilidad: faltan métricas, logs estructurados, trazas y alertas.
+- Configuración de modelos y costes: falta gestión avanzada de modelos, caching y optimización de coste.
+
+## Advertencia — No usar en producción
+
+Este repositorio es un ejemplo didáctico. No lo despliegues en producción ni proceses datos sensibles con él sin una revisión exhaustiva y la implementación de controles de seguridad, privacidad y resiliencia. Antes de cualquier uso productivo, añade autenticación, control de acceso, persistencia segura, sanitización de datos, pruebas de carga y mecanismos de mitigación (rate limits, retries, circuit breakers, sandboxing para herramientas).
+
+### Qué falta respecto a `nanobot`
+
+El post y `nanobot` contienen varias consideraciones avanzadas y características que aquí por simplificacion no se consideran.
+Entre las principales diferencias en funcionalidades y características que faltan en `femtobot` respecto a `nanobot` se incluyen:
+
+- Persistencia avanzada: almacenamiento de memoria a largo plazo (archivos, SQLite, Redis, vector DBs).
+- Memoria y recuperación: mecanismos de indexación, embeddings y recuperación semántica para contexto a largo plazo.
+- Plantillas de prompts y gestor de roles: sistema para versionar y parametrizar prompts y prompts de sistema.
+- Evaluación y benchmarks: harness de evaluación automática, métricas de calidad y pruebas A/B de prompts.
+- Seguridad y moderación: filtros de contenido, verificación y sanitización, y políticas de seguridad.
+- Sandboxing de herramientas: ejecutar llamadas externas de forma aislada y limitada.
+- Streaming y respuestas parciales: compatibilidad con respuestas por streaming del modelo.
+- Orquestación de modelos: selección y conmutación entre modelos, fallback y mezcla de modelos.
+- Caché y optimizaciones: caching de respuestas, deduplicación y batching de llamadas.
+- Operaciones y observabilidad: métricas, logs estructurados, tracing (OpenTelemetry).
+- Tests y CI avanzados: linters, type checks (mypy), pruebas de integración, y pruebas de seguridad.
+- Integraciones de canales: ejemplos para Telegram, Discord, Webhooks/HTTP y otros canales reales.
+- Gestión de costos y límites: herramientas para controlar consumo y gasto en APIs LLM.

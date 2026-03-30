@@ -1,5 +1,10 @@
 # Femtobot — Demo ligera de arquitectura de agente
 
+[![Docs](https://github.com/rafnixg/femtobot/actions/workflows/build-doc.yml/badge.svg)](https://github.com/rafnixg/femtobot/actions/workflows/build-doc.yml)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Documentación](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://rafnixg.github.io/femtobot/femtobot.html)
+![Licencia](https://img.shields.io/badge/licencia-demo%20educativo-lightgrey)
+
 Femtobot es un ejemplo educativo y minimalista de cómo organizar un
 agente conversacional en capas. Está inspirado en la arquitectura
 presentada en el post "nanobot — arquitectura y funcionamiento" y

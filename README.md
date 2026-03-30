@@ -9,6 +9,8 @@ Femtobot —inspirado en el post y la arquitectura de `nanobot`— es un ejemplo
 
 Recuerda que no es un framework ni una librería, sino un ejemplo de referencia para aprender y prototipar. No está diseñado ni preparado para producción, y carece de muchas características necesarias para un despliegue real (persistencia, seguridad, robustez, etc.). Sin embargo, es un buen punto de partida para entender los conceptos clave y experimentar con agentes conversacionales en Python.
 
+["nanobot — arquitectura y funcionamiento del agente IA ultra ligero"](https://blog.rafnixg.dev/nanobot-arquitectura-y-funcionamiento-del-agente-ia-ultra-ligero) (Post con explicación detallada de la arquitectura, diseño y código de referencia).
+
 ## Resumen rápido
 
 - Flujo asíncrono basado en `asyncio.Queue` para desacoplar productores (canales) y consumidores (el agente).
